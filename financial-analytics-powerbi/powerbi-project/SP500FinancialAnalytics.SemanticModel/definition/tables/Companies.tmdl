@@ -1,0 +1,39 @@
+table Companies
+	/// Company and sector lookup table used for slicers and sector-level analysis.
+	column Ticker
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: Ticker
+
+	column Company
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Company
+
+	column Sector
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Sector
+
+	partition Companies = m
+		mode: import
+		source =
+			let
+				Source = #table(
+					type table [Ticker=text, Company=text, Sector=text],
+					{
+						{"AAPL", "Apple Inc.", "Information Technology"},
+						{"MSFT", "Microsoft Corp.", "Information Technology"},
+						{"NVDA", "NVIDIA Corp.", "Information Technology"},
+						{"AMZN", "Amazon.com Inc.", "Consumer Discretionary"},
+						{"GOOGL", "Alphabet Inc. Class A", "Communication Services"},
+						{"META", "Meta Platforms Inc.", "Communication Services"},
+						{"JPM", "JPMorgan Chase & Co.", "Financials"},
+						{"V", "Visa Inc.", "Financials"},
+						{"XOM", "Exxon Mobil Corp.", "Energy"},
+						{"WMT", "Walmart Inc.", "Consumer Staples"}
+					}
+				)
+			in
+				Source

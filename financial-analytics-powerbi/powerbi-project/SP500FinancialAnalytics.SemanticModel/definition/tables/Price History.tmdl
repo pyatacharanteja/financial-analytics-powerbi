@@ -1,0 +1,112 @@
+table 'Price History'
+	/// Daily public market data imported from Stooq for a representative group of large-cap U.S. companies.
+	measure 'Latest Close' =
+		VAR LatestDate = MAX('Price History'[Date])
+		RETURN CALCULATE(MAX('Price History'[Close]), 'Price History'[Date] = LatestDate)
+		formatString: $#,##0.00
+
+	measure 'Previous Close' =
+		VAR LatestDate = MAX('Price History'[Date])
+		VAR PreviousDate = CALCULATE(MAX('Price History'[Date]), FILTER(ALLSELECTED('Price History'[Date]), 'Price History'[Date] < LatestDate))
+		RETURN CALCULATE(MAX('Price History'[Close]), 'Price History'[Date] = PreviousDate)
+		formatString: $#,##0.00
+
+	measure 'Daily Return %' = DIVIDE([Latest Close] - [Previous Close], [Previous Close])
+		formatString: 0.00%
+
+	measure 'Start Period Close' =
+		VAR FirstDate = MIN('Price History'[Date])
+		RETURN CALCULATE(MAX('Price History'[Close]), 'Price History'[Date] = FirstDate)
+		formatString: $#,##0.00
+
+	measure 'Period Return %' = DIVIDE([Latest Close] - [Start Period Close], [Start Period Close])
+		formatString: 0.00%
+
+	measure 'Average Company Period Return %' = AVERAGEX(VALUES(Companies[Ticker]), CALCULATE([Period Return %]))
+		formatString: 0.00%
+
+	measure 'Average Close' = AVERAGE('Price History'[Close])
+		formatString: $#,##0.00
+
+	measure 'Average Volume' = AVERAGE('Price History'[Volume])
+		formatString: #,##0
+
+	measure 'Max Close' = MAX('Price History'[Close])
+		formatString: $#,##0.00
+
+	measure 'Min Close' = MIN('Price History'[Close])
+		formatString: $#,##0.00
+
+	measure 'Trading Days' = DISTINCTCOUNT('Price History'[Date])
+		formatString: #,##0
+
+	column Date
+		dataType: dateTime
+		formatString: Short Date
+		summarizeBy: none
+		sourceColumn: Date
+
+	column Open
+		dataType: double
+		formatString: $#,##0.00
+		summarizeBy: none
+		sourceColumn: Open
+
+	column High
+		dataType: double
+		formatString: $#,##0.00
+		summarizeBy: none
+		sourceColumn: High
+
+	column Low
+		dataType: double
+		formatString: $#,##0.00
+		summarizeBy: none
+		sourceColumn: Low
+
+	column Close
+		dataType: double
+		formatString: $#,##0.00
+		summarizeBy: none
+		sourceColumn: Close
+
+	column Volume
+		dataType: int64
+		formatString: #,##0
+		summarizeBy: sum
+		sourceColumn: Volume
+
+	column Ticker
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Ticker
+
+	partition 'Price History' = m
+		mode: import
+		source =
+			let
+				StartDate = #date(2025, 1, 1),
+				EndDate = Date.From(DateTime.LocalNow()),
+				Tickers = {
+					[Ticker="AAPL", Stooq="aapl.us"], [Ticker="MSFT", Stooq="msft.us"],
+					[Ticker="NVDA", Stooq="nvda.us"], [Ticker="AMZN", Stooq="amzn.us"],
+					[Ticker="GOOGL", Stooq="googl.us"], [Ticker="META", Stooq="meta.us"],
+					[Ticker="JPM", Stooq="jpm.us"], [Ticker="V", Stooq="v.us"],
+					[Ticker="XOM", Stooq="xom.us"], [Ticker="WMT", Stooq="wmt.us"]
+				},
+				GetStock = (Ticker as text, Symbol as text) as table =>
+					let
+						D1 = Date.ToText(StartDate, "yyyyMMdd"),
+						D2 = Date.ToText(EndDate, "yyyyMMdd"),
+						Url = "https://stooq.com/q/d/l/?s=" & Symbol & "&d1=" & D1 & "&d2=" & D2 & "&i=d",
+						Raw = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+						Headers = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),
+						Typed = Table.TransformColumnTypes(Headers, {{"Date", type date}, {"Open", type number}, {"High", type number}, {"Low", type number}, {"Close", type number}, {"Volume", Int64.Type}}),
+						AddTicker = Table.AddColumn(Typed, "Ticker", each Ticker, type text)
+					in
+						AddTicker,
+				Tables = List.Transform(Tickers, each GetStock(_[Ticker], _[Stooq])),
+				Combined = Table.Combine(Tables),
+				Sorted = Table.Sort(Combined, {{"Ticker", Order.Ascending}, {"Date", Order.Ascending}})
+			in
+				Sorted

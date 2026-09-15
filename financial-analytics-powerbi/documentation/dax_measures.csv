@@ -1,0 +1,10 @@
+Measure,DAX,Purpose
+Latest Close,"VAR LatestDate = MAX(PriceHistory[Date]) RETURN CALCULATE(MAX(PriceHistory[Close]), PriceHistory[Date] = LatestDate)",Latest closing price in current filter context
+Previous Close,"VAR LatestDate = MAX(PriceHistory[Date]) VAR PrevDate = CALCULATE(MAX(PriceHistory[Date]), FILTER(ALL(PriceHistory[Date]), PriceHistory[Date] < LatestDate)) RETURN CALCULATE(MAX(PriceHistory[Close]), PriceHistory[Date] = PrevDate)",Previous available close
+Daily Return %,"DIVIDE([Latest Close] - [Previous Close], [Previous Close])",Latest day-over-day return
+Start Period Close,"VAR FirstDate = MIN(PriceHistory[Date]) RETURN CALCULATE(MAX(PriceHistory[Close]), PriceHistory[Date] = FirstDate)",First close in selected period
+Period Return %,"DIVIDE([Latest Close] - [Start Period Close], [Start Period Close])",Return over selected filter period
+Average Close,"AVERAGE(PriceHistory[Close])",Average selected-period close
+Average Volume,"AVERAGE(PriceHistory[Volume])",Average selected-period trading volume
+Max Close,"MAX(PriceHistory[Close])",Maximum selected-period close
+Min Close,"MIN(PriceHistory[Close])",Minimum selected-period close

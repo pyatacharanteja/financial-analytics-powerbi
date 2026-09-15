@@ -1,0 +1,3 @@
+relationship 'Companies to Price History'
+	fromColumn: 'Price History'.Ticker
+	toColumn: Companies.Ticker

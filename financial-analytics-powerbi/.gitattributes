@@ -1,0 +1,9 @@
+# GitHub Linguist cleanup
+# The .m files below are Microsoft Power Query M, but GitHub may misclassify .m as Wolfram Language.
+powerbi/queries/*.m -linguist-detectable
+
+# Supporting Python analysis is kept in the repository but is not the primary Power BI implementation.
+python/** -linguist-detectable
+
+# docs/ is a browser-based portfolio preview for GitHub Pages rather than the core BI model.
+docs/** linguist-documentation
