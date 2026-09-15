@@ -7,6 +7,7 @@ A research-style financial analytics portfolio project combining **Power BI, DAX
 A browser-based version of the dashboard is included under `docs/` and is designed to be published with **GitHub Pages**.
 
 **Live dashboard URL after GitHub Pages is enabled:**  
+https://pyatacharanteja.github.io/financial-analytics-powerbi/
 
 
 The web dashboard includes:
